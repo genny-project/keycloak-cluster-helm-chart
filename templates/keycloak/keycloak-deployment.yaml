@@ -1,0 +1,57 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  name: {{ template "keycloak.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}
+      name: {{ template "keycloak.fullname" . }}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ template "fullname" . }}
+        name: {{ template "keycloak.fullname" . }}
+    spec:
+      restartPolicy: Always
+      initContainers:
+       - name: {{ template "keycloak.fullname" . }}-init-container
+         image: {{ .Values.init_container.image }}
+         imagePullPolicy: {{ .Values.init_container.imagePullPolicy }}
+         command:
+         - sh
+         - -c
+         - until telnet {{ template "mysql.fullname" . }}-svc 3306 </dev/null 2>&1; do echo waiting for mysql; sleep 2; done;
+      containers:
+      - image: "{{ .Values.keycloak.repository }}:{{ .Values.keycloak.tag }}"
+        name: {{ template "keycloak.fullname" . }}
+        imagePullPolicy: {{ .Values.keycloak.imagePullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ template "keycloak.fullname" . }}-config
+        env:
+        - name: MYIP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        ports:
+        - name: http-endpoint
+          containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /auth/health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 3
+{{ end }}

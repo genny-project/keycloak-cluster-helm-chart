@@ -1,0 +1,19 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "mysql.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+
+data:
+  DB_ADDR: {{ template "mysql.fullname" . }}
+{{- range $key, $val := .Values.mysql.env}}
+{{ $key | indent 2}}: {{ $val | quote }}
+{{- end}}
+
+{{ end }}

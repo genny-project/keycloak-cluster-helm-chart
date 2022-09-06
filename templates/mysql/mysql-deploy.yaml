@@ -1,0 +1,43 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  name: {{ template "mysql.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}
+      name: {{ template "mysql.fullname" . }}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ template "fullname" . }}
+        name: {{ template "mysql.fullname" . }}
+    spec:
+      containers:
+      - image: "{{ .Values.mysql.repository }}:{{ .Values.mysql.tag }}"
+        name: {{ template "mysql.fullname" . }}
+        imagePullPolicy: {{ .Values.mysql.imagePullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ template "mysql.fullname" . }}-config
+        ports:
+        - name: http
+          containerPort: 3306
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mysql-storage
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: {{ template "mysql.fullname" . }}-pvc-claim
+{{ end }}

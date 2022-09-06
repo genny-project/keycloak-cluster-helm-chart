@@ -1,0 +1,22 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "keycloak.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+
+data:
+  KC_DB_URL: jdbc:mysql://{{ template "mysql.fullname" . }}-svc/{{ .Values.mysql.env.MYSQL_DATABASE }}
+  KC_DB_USERNAME: {{ .Values.mysql.env.MYSQL_USER }}
+  KC_DB_PASSWORD: {{ .Values.mysql.env.MYSQL_PASSWORD }}
+  KC_HOSTNAME: {{ index .Values.urlList 0 }}
+{{- range $key, $val := .Values.keycloak.env}}
+{{ $key | indent 2}}: {{ $val | quote }}
+{{- end}}
+
+{{ end }}

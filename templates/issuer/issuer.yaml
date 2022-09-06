@@ -1,0 +1,17 @@
+{{- if .Values.isTls }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-keycloak
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@gada.io
+    privateKeySecretRef:
+      name: letsencrypt-keycloak
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+{{ end }}
+

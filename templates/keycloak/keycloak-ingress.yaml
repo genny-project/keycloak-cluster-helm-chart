@@ -1,0 +1,47 @@
+{{- $keycloakFullname:= include "keycloak.fullname" . -}}
+{{- $keycloakPort  := .Values.keycloak.service.port -}}
+{{- if .Values.keycloak.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "keycloak.fullname" . }}-ingress
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    {{- range $key, $value := .Values.keycloak.ingress.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- if .Values.isTls }}
+      cert-manager.io/issuer: letsencrypt-keycloak
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        more_set_headers "Cache-Control : no-store, no-cache, must-revalidate";
+        more_set_headers "X-Content-Type-Options: nosniff";
+        more_set_headers "X-Frame-Options: SAMEORIGIN";
+    {{- end }}
+spec:
+  rules:
+  {{ range  .Values.urlList }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $keycloakFullname }}-svc
+            port:
+              number: {{ $keycloakPort }}
+  {{ end }}
+  {{- if .Values.isTls }}
+  tls:
+  {{ range  .Values.urlList }}
+  - hosts:
+    - {{ . }}
+    secretName: {{ $keycloakFullname }}-lets-encrypt-tls
+  {{ end }}
+  {{ end }}
+{{ end }}

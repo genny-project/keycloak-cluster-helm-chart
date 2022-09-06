@@ -1,0 +1,14 @@
+{{- if .Values.nginx.enabled }}
+apiVersion: v1
+data:
+{{ toYaml .Values.nginx.config | indent 2 }}
+kind: ConfigMap
+metadata:
+  name: {{ template "nginx.fullname" . }}-config
+  namespace: {{ .Values.nginx.namespace }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+{{ end }}
