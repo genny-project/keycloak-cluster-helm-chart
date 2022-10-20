@@ -17,6 +17,7 @@ metadata:
     {{- end }}
     {{- if .Values.isTls }}
       cert-manager.io/issuer: letsencrypt-keycloak
+      nginx.ingress.kubernetes.io/app-root: /auth
       nginx.ingress.kubernetes.io/configuration-snippet: |
         more_set_headers "Cache-Control : no-store, no-cache, must-revalidate";
         more_set_headers "X-Content-Type-Options: nosniff";
@@ -28,7 +29,7 @@ spec:
     http:
       paths:
       - path: /
-        pathType: ImplementationSpecific
+        pathType: Prefix
         backend:
           service:
             name: {{ $keycloakFullname }}-svc
